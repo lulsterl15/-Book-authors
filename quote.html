@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Get a Free Quote — StreamBunker Animated Book Trailers</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+  :root{
+
+    --night:#0B0A12;--night-2:#13111F;--night-3:#1B1830;
+
+    --cream:#F3ECDD;--cream-soft:#C8BFD6;
+
+    --plum:#8A5CF0;--plum-deep:#6C3FC5;
+
+    --gold:#E9B567;--gold-soft:#F3D29A;
+
+    --rule-dark:#2c2840;--field:#16132a;--field-line:#36315a;
+
+    --ink:#1C1A2E;
+
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  html{scroll-behavior:smooth;}
+
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--night);color:var(--cream);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;}
+
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay;}
+
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;line-height:1.1;font-weight:600;}
+
+  nav{position:sticky;top:0;z-index:40;background:rgba(11,10,18,.72);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule-dark);}
+
+  nav .navwrap{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:66px;}
+
+  .logo{font-family:'Fraunces',serif;font-weight:900;font-size:1.3rem;color:var(--cream);text-decoration:none;}
+
+  .logo span{color:var(--plum);}
+
+  .back{color:var(--cream-soft);text-decoration:none;font-size:.92rem;font-weight:500;display:flex;align-items:center;gap:7px;transition:color .2s;}
+
+  .back:hover{color:var(--gold-soft);}
+
+  .head{position:relative;padding:64px 0 30px;text-align:center;overflow:hidden;}
+
+  .head::before{content:"";position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:120%;height:100%;background:radial-gradient(55% 60% at 50% 0%, rgba(138,92,240,.28), transparent 70%);pointer-events:none;animation:flicker 6s ease-in-out infinite;}
+
+  @keyframes flicker{0%,100%{opacity:.85;}50%{opacity:1;}}
+
+  .head .inner{position:relative;z-index:2;}
+
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;font-size:.72rem;color:var(--gold-soft);margin-bottom:22px;}
+
+  .kicker .line{width:30px;height:1px;background:var(--gold);opacity:.6;}
+
+  .head h1{font-size:clamp(2.2rem,6vw,3.6rem);letter-spacing:-.02em;color:var(--cream);max-width:16ch;margin:0 auto;}
+
+  .head h1 em{font-style:italic;color:var(--gold-soft);font-weight:500;}
+
+  .head p{color:var(--cream-soft);font-size:clamp(1.02rem,2vw,1.2rem);max-width:48ch;margin:20px auto 0;}
+
+  .chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+
+  .chip{display:flex;align-items:center;gap:7px;background:var(--night-3);border:1px solid var(--rule-dark);border-radius:999px;padding:8px 16px;font-size:.85rem;color:var(--cream-soft);}
+
+  .formcard{position:relative;z-index:2;background:var(--night-2);border:1px solid var(--rule-dark);border-radius:20px;padding:40px;margin:34px 0 60px;box-shadow:0 40px 90px rgba(0,0,0,.5);}
+
+  @media(max-width:560px){.formcard{padding:26px 20px;}}
+
+  .formcard .glow{position:absolute;inset:-2px;border-radius:20px;background:radial-gradient(60% 60% at 50% 0%, rgba(138,92,240,.25), transparent 70%);filter:blur(20px);z-index:-1;}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+  @media(max-width:560px){.row{grid-template-columns:1fr;}}
+
+  .field{margin-bottom:18px;}
+
+  label{display:block;font-size:.82rem;font-weight:600;letter-spacing:.04em;color:var(--cream);margin-bottom:8px;}
+
+  label .opt{color:#7d7596;font-weight:400;font-size:.78rem;letter-spacing:0;}
+
+  label .req{color:var(--gold);margin-left:2px;}
+
+  input,select,textarea{
+
+    width:100%;background:var(--field);border:1px solid var(--field-line);border-radius:11px;
+
+    padding:13px 15px;color:var(--cream);font-family:inherit;font-size:.96rem;transition:border-color .2s, box-shadow .2s;
+
+  }
+
+  input::placeholder,textarea::placeholder{color:#6f6790;}
+
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--plum);box-shadow:0 0 0 3px rgba(138,92,240,.22);}
+
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23C8BFD6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 15px center;padding-right:40px;cursor:pointer;}
+
+  select option{background:var(--night-2);color:var(--cream);}
+
+  textarea{resize:vertical;min-height:110px;}
+
+  .package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+
+  @media(max-width:560px){.package-grid{grid-template-columns:1fr;}}
+
+  .pkg{position:relative;}
+
+  .pkg input{position:absolute;opacity:0;pointer-events:none;}
+
+  .pkg label{display:block;cursor:pointer;background:var(--field);border:1px solid var(--field-line);border-radius:12px;padding:14px;text-align:center;margin:0;transition:all .18s ease;}
+
+  .pkg .pname{font-family:'Fraunces',serif;font-size:1.02rem;color:var(--cream);font-weight:600;}
+
+  .pkg .pprice{color:var(--gold-soft);font-size:.86rem;font-weight:600;margin-top:2px;}
+
+  .pkg .pruntime{color:#7d7596;font-size:.74rem;margin-top:2px;}
+
+  .pkg input:checked + label{border-color:var(--plum);background:linear-gradient(180deg,#241d44,#191534);box-shadow:0 0 0 2px rgba(138,92,240,.35);}
+
+  .pkg input:focus-visible + label{box-shadow:0 0 0 3px rgba(138,92,240,.4);}
+
+  .submit{width:100%;background:var(--gold);color:#1a1606;border:none;border-radius:999px;padding:16px;font-family:inherit;font-weight:700;font-size:1.04rem;cursor:pointer;margin-top:8px;transition:transform .15s ease, box-shadow .2s;}
+
+  .submit:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(233,181,103,.4);}
+
+  .submit:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}
+
+  .fine{text-align:center;color:#7d7596;font-size:.82rem;margin-top:16px;}
+
+  .fine b{color:var(--cream-soft);font-weight:600;}
+
+  .success{display:none;text-align:center;padding:30px 10px;}
+
+  .success.show{display:block;}
+
+  .success .mark{width:74px;height:74px;border-radius:50%;background:linear-gradient(180deg,var(--plum),var(--plum-deep));display:grid;place-items:center;margin:0 auto 22px;box-shadow:0 12px 40px rgba(138,92,240,.5);}
+
+  .success h2{font-size:1.8rem;color:var(--cream);}
+
+  .success h2 em{font-style:italic;color:var(--gold-soft);}
+
+  .success p{color:var(--cream-soft);max-width:40ch;margin:14px auto 0;}
+
+  .success .again{display:inline-block;margin-top:26px;color:var(--gold-soft);text-decoration:none;font-weight:600;font-size:.92rem;border-bottom:1px solid rgba(243,210,154,.4);padding-bottom:2px;}
+
+  footer{border-top:1px solid var(--rule-dark);padding:30px 0;text-align:center;}
+
+  footer .logo{font-size:1.1rem;}
+
+  footer p{color:#7d7596;font-size:.84rem;margin-top:8px;}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
+
+</style>
+
+</head>
+
+<body>
+
+  <nav>
+
+    <div class="navwrap">
+
+      <a href="index.html" class="logo">Stream<span>·</span>Bunker</a>
+
+      <a href="index.html" class="back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back to home</a>
+
+    </div>
+
+  </nav>
+
+  <header class="head">
+
+    <div class="wrap inner">
+
+      <div class="kicker"><span class="line"></span> Free, no obligation <span class="line"></span></div>
+
+      <h1>Let's price your <em>trailer</em>.</h1>
+
+      <p>Tell us about your book and what you're picturing. We'll send back ideas and a quote — usually within a couple of days. No pressure, no jargon.</p>
+
+      <div class="chips">
+
+        <div class="chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#E9B567" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Reply in ~2 days</div>
+
+        <div class="chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#E9B567" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> You approve before we animate</div>
+
+        <div class="chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#E9B567" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 50% deposit to start</div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+  <main class="wrap">
+
+    <div class="formcard">
+
+      <div class="glow"></div>
+
+      <form id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+
+        <div class="row">
+
+          <div class="field">
+
+            <label for="name">Your name <span class="req">*</span></label>
+
+            <input type="text" id="name" name="name" placeholder="Jane Author" required>
+
+          </div>
+
+          <div class="field">
+
+            <label for="email">Email <span class="req">*</span></label>
+
+            <input type="email" id="email" name="email" placeholder="you@email.com" required>
+
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="field">
+
+            <label for="book">Book title <span class="opt">(or working title)</span></label>
+
+            <input type="text" id="book" name="book_title" placeholder="The Last Ember">
+
+          </div>
+
+          <div class="field">
+
+            <label for="genre">Genre</label>
+
+            <select id="genre" name="genre">
+
+              <option value="">Select a genre…</option>
+
+              <option>Fantasy / Sci-fi</option>
+
+              <option>Romance / YA</option>
+
+              <option>Thriller / Mystery</option>
+
+              <option>Children's</option>
+
+              <option>Non-fiction / Memoir</option>
+
+              <option>Author branding (not a single book)</option>
+
+              <option>Other</option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+        <div class="field">
+
+          <label>Which package are you leaning toward? <span class="opt">(no commitment — just helps us quote)</span></label>
+
+          <div class="package-grid">
+
+            <div class="pkg">
+
+              <input type="radio" id="p1" name="package" value="Essential — $500">
+
+              <label for="p1"><div class="pname">Essential</div><div class="pprice">$500</div><div class="pruntime">up to 60s</div></label>
+
+            </div>
+
+            <div class="pkg">
+
+              <input type="radio" id="p2" name="package" value="Signature — $900">
+
+              <label for="p2"><div class="pname">Signature</div><div class="pprice">$900</div><div class="pruntime">up to 90s</div></label>
+
+            </div>
+
+            <div class="pkg">
+
+              <input type="radio" id="p3" name="package" value="Cinematic — $1,500">
+
+              <label for="p3"><div class="pname">Cinematic</div><div class="pprice">$1,500</div><div class="pruntime">up to 2 min</div></label>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="field">
+
+            <label for="timeline">Launch / deadline <span class="opt">(optional)</span></label>
+
+            <input type="text" id="timeline" name="timeline" placeholder="e.g. releasing in August">
+
+          </div>
+
+          <div class="field">
+
+            <label for="link">Book or website link <span class="opt">(optional)</span></label>
+
+            <input type="text" id="link" name="link" placeholder="Amazon / Goodreads / site">
+
+          </div>
+
+        </div>
+
+        <div class="field">
+
+          <label for="about">Tell us about your book &amp; what you're picturing <span class="req">*</span></label>
+
+          <textarea id="about" name="about" placeholder="A quick synopsis, the mood you want (epic, cozy, dark, playful…), any scenes or characters you'd love to see, and how you plan to use the trailer." required></textarea>
+
+        </div>
+
+        <input type="hidden" name="_subject" value="New StreamBunker trailer quote request">
+
+        <input type="text" name="_gotcha" style="display:none">
+
+        <button type="submit" class="submit" id="submitBtn">Send my quote request →</button>
+
+        <p class="fine">We only use your details to reply about your trailer. <b>No spam, ever.</b></p>
+
+      </form>
+
+      <div class="success" id="successMsg">
+
+        <div class="mark"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+        <h2>That's a <em>wrap</em> — request received.</h2>
+
+        <p>Thanks! We've got your details and we'll be in touch with ideas and a quote, usually within a couple of days.</p>
+
+        <a href="index.html" class="again">← Back to StreamBunker</a>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer>
+
+    <div class="wrap">
+
+      <a href="index.html" class="logo">Stream<span style="color:var(--plum);">·</span>Bunker</a>
+
+      <p>Animated book trailers, produced storyboard-first. © 2026</p>
+
+    </div>
+
+  </footer>
+
+  <script>
+
+    const form = document.getElementById('quoteForm');
+
+    const successMsg = document.getElementById('successMsg');
+
+    const btn = document.getElementById('submitBtn');
+
+    const ACTION = form.getAttribute('action');
+
+    const NOT_CONFIGURED = ACTION.indexOf('YOUR_FORM_ID') !== -1;
+
+    (function preselect(){
+
+      const p = new URLSearchParams(window.location.search).get('package');
+
+      const map = {essential:'p1', signature:'p2', cinematic:'p3'};
+
+      if(p && map[p]){ const el = document.getElementById(map[p]); if(el) el.checked = true; }
+
+    })();
+
+    const FALLBACK_EMAIL = 'hello@streambunker.example';
+
+    form.addEventListener('submit', async function(e){
+
+      e.preventDefault();
+
+      if(form._gotcha && form._gotcha.value){ return; }
+
+      if(NOT_CONFIGURED){
+
+        const d = new FormData(form);
+
+        const body =
+
+          'Name: ' + (d.get('name')||'') + '\n' +
+
+          'Email: ' + (d.get('email')||'') + '\n' +
+
+          'Book title: ' + (d.get('book_title')||'') + '\n' +
+
+          'Genre: ' + (d.get('genre')||'') + '\n' +
+
+          'Package: ' + (d.get('package')||'(not chosen)') + '\n' +
+
+          'Timeline: ' + (d.get('timeline')||'') + '\n' +
+
+          'Link: ' + (d.get('link')||'') + '\n\n' +
+
+          'About:\n' + (d.get('about')||'');
+
+        window.location.href = 'mailto:' + FALLBACK_EMAIL +
+
+          '?subject=' + encodeURIComponent('New trailer quote request') +
+
+          '&body=' + encodeURIComponent(body);
+
+        form.style.display='none'; successMsg.classList.add('show');
+
+        return;
+
+      }
+
+      btn.disabled = true; btn.textContent = 'Sending…';
+
+      try{
+
+        const res = await fetch(ACTION, {
+
+          method:'POST', body:new FormData(form), headers:{'Accept':'application/json'}
+
+        });
+
+        if(res.ok){ form.style.display='none'; successMsg.classList.add('show'); window.scrollTo({top:0,behavior:'smooth'}); }
+
+        else{ throw new Error('bad response'); }
+
+      }catch(err){
+
+        btn.disabled=false; btn.textContent='Send my quote request →';
+
+        alert('Something went wrong sending your request. Please email us directly at ' + FALLBACK_EMAIL);
+
+      }
+
+    });
+
+  </script>
+
+</body>
+
+</html>
