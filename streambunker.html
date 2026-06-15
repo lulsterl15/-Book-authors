@@ -786,14 +786,13 @@
   function setFeatured(){
     var trailer = document.getElementById('featured-trailer');
     var titleEl = document.getElementById('featured-title');
-    if(trailer){ trailer.src = 'https://www.youtube.com/embed/' + pick.id; }
+    if(trailer){ trailer.setAttribute('src', 'https://www.youtube.com/embed/' + pick.id); }
     if(titleEl){ titleEl.textContent = pick.title; }
   }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', setFeatured);
-  } else {
-    setFeatured();
-  }
+  window.addEventListener('load', setFeatured);
+  document.addEventListener('DOMContentLoaded', setFeatured);
+  setTimeout(setFeatured, 0);
+  setFeatured();
 })();
 
     const io = new IntersectionObserver((entries)=>{
