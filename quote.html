@@ -416,7 +416,7 @@
       var href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join(L));
       window.location.href = href;
       var btn = form.querySelector('button[type="submit"], button, input[type="submit"]');
-      if(btn){ btn.textContent = 'Opening your email app…'; }
+      if(btn){ btn.textContent = 'Send'; }
     });
   }
 </script>
