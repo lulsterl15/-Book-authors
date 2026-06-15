@@ -216,7 +216,7 @@
 
       <div class="glow"></div>
 
-      <form id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <form id="quoteForm">
 
         <div class="row">
 
@@ -377,94 +377,49 @@
   </footer>
 
   <script>
+  // Pre-select a package if the URL has ?package=essential|signature|cinematic
+  (function preselect(){
+    try {
+      var p = new URLSearchParams(window.location.search).get('package');
+      if(!p) return;
+      p = p.toLowerCase();
+      var radios = document.querySelectorAll('input[name="package"]');
+      radios.forEach(function(r){
+        if(r.value.toLowerCase().indexOf(p) === 0){ r.checked = true; }
+      });
+    } catch(e){}
+  })();
 
-    const form = document.getElementById('quoteForm');
-
-    const successMsg = document.getElementById('successMsg');
-
-    const btn = document.getElementById('submitBtn');
-
-    const ACTION = form.getAttribute('action');
-
-    const NOT_CONFIGURED = ACTION.indexOf('YOUR_FORM_ID') !== -1;
-
-    (function preselect(){
-
-      const p = new URLSearchParams(window.location.search).get('package');
-
-      const map = {essential:'p1', signature:'p2', cinematic:'p3'};
-
-      if(p && map[p]){ const el = document.getElementById(map[p]); if(el) el.checked = true; }
-
-    })();
-
-    const FALLBACK_EMAIL = 'hello@streambunker.example';
-
-    form.addEventListener('submit', async function(e){
-
-      e.preventDefault();
-
-      if(form._gotcha && form._gotcha.value){ return; }
-
-      if(NOT_CONFIGURED){
-
-        const d = new FormData(form);
-
-        const body =
-
-          'Name: ' + (d.get('name')||'') + '\n' +
-
-          'Email: ' + (d.get('email')||'') + '\n' +
-
-          'Book title: ' + (d.get('book_title')||'') + '\n' +
-
-          'Genre: ' + (d.get('genre')||'') + '\n' +
-
-          'Package: ' + (d.get('package')||'(not chosen)') + '\n' +
-
-          'Timeline: ' + (d.get('timeline')||'') + '\n' +
-
-          'Link: ' + (d.get('link')||'') + '\n\n' +
-
-          'About:\n' + (d.get('about')||'');
-
-        window.location.href = 'mailto:' + FALLBACK_EMAIL +
-
-          '?subject=' + encodeURIComponent('New trailer quote request') +
-
-          '&body=' + encodeURIComponent(body);
-
-        form.style.display='none'; successMsg.classList.add('show');
-
-        return;
-
-      }
-
-      btn.disabled = true; btn.textContent = 'Sending…';
-
-      try{
-
-        const res = await fetch(ACTION, {
-
-          method:'POST', body:new FormData(form), headers:{'Accept':'application/json'}
-
-        });
-
-        if(res.ok){ form.style.display='none'; successMsg.classList.add('show'); window.scrollTo({top:0,behavior:'smooth'}); }
-
-        else{ throw new Error('bad response'); }
-
-      }catch(err){
-
-        btn.disabled=false; btn.textContent='Send my quote request →';
-
-        alert('Something went wrong sending your request. Please email us directly at ' + FALLBACK_EMAIL);
-
-      }
-
+  // Submit by opening the visitor's email app, pre-addressed to the studio.
+  var form = document.getElementById('quoteForm');
+  if(form){
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      function val(n){ var f = form.elements[n]; return f ? (f.value||'').trim() : ''; }
+      var pkg = '';
+      var pr = form.querySelectorAll('input[name="package"]');
+      pr.forEach(function(r){ if(r.checked) pkg = r.value; });
+      var L = String.fromCharCode(10);
+      var lines = [
+        'New quote request from the StreamBunker site:', '',
+        'Name: ' + val('name'),
+        'Email: ' + val('email'),
+        'Book title: ' + val('book_title'),
+        'Genre: ' + val('genre'),
+        'Package: ' + pkg,
+        'Timeline: ' + val('timeline'),
+        'Link: ' + val('link'),
+        '', 'About the project:', val('about')
+      ];
+      var to = 'sterl24@gmail.com';
+      var subject = 'New StreamBunker trailer request' + (val('book_title') ? ' — ' + val('book_title') : '');
+      var href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join(L));
+      window.location.href = href;
+      var btn = form.querySelector('button[type="submit"], button, input[type="submit"]');
+      if(btn){ btn.textContent = 'Opening your email app…'; }
     });
-
-  </script>
+  }
+</script>
 
 </body>
 
