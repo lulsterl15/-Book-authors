@@ -783,11 +783,17 @@
     { id: 'Bp17CmL9xgU', title: 'Los Demonois' }
   ];
   var pick = videos[Math.floor(Math.random() * videos.length)];
-  // featured trailer iframe set below
-  var titleEl = document.getElementById('featured-title');
-  var trailer = document.getElementById('featured-trailer');
-  if(trailer) trailer.src = 'https://www.youtube.com/embed/' + pick.id;
-  if(titleEl) titleEl.textContent = pick.title;
+  function setFeatured(){
+    var trailer = document.getElementById('featured-trailer');
+    var titleEl = document.getElementById('featured-title');
+    if(trailer){ trailer.src = 'https://www.youtube.com/embed/' + pick.id; }
+    if(titleEl){ titleEl.textContent = pick.title; }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', setFeatured);
+  } else {
+    setFeatured();
+  }
 })();
 
     const io = new IntersectionObserver((entries)=>{
