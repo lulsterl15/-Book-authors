@@ -216,7 +216,7 @@
 
       <div class="glow"></div>
 
-      <form id="quoteForm">
+      <form id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
 
         <div class="row">
 
@@ -377,48 +377,43 @@
   </footer>
 
   <script>
-  // Pre-select a package if the URL has ?package=essential|signature|cinematic
-  (function preselect(){
-    try {
-      var p = new URLSearchParams(window.location.search).get('package');
-      if(!p) return;
-      p = p.toLowerCase();
-      var radios = document.querySelectorAll('input[name="package"]');
-      radios.forEach(function(r){
-        if(r.value.toLowerCase().indexOf(p) === 0){ r.checked = true; }
-      });
-    } catch(e){}
-  })();
-
-  // Submit by opening the visitor's email app, pre-addressed to the studio.
-  var form = document.getElementById('quoteForm');
-  if(form){
-    form.addEventListener('submit', function(ev){
-      ev.preventDefault();
-      function val(n){ var f = form.elements[n]; return f ? (f.value||'').trim() : ''; }
-      var pkg = '';
-      var pr = form.querySelectorAll('input[name="package"]');
-      pr.forEach(function(r){ if(r.checked) pkg = r.value; });
-      var L = String.fromCharCode(10);
-      var lines = [
-        'New quote request from the StreamBunker site:', '',
-        'Name: ' + val('name'),
-        'Email: ' + val('email'),
-        'Book title: ' + val('book_title'),
-        'Genre: ' + val('genre'),
-        'Package: ' + pkg,
-        'Timeline: ' + val('timeline'),
-        'Link: ' + val('link'),
-        '', 'About the project:', val('about')
-      ];
-      var to = 'sterl24@gmail.com';
-      var subject = 'New StreamBunker trailer request' + (val('book_title') ? ' — ' + val('book_title') : '');
-      var href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join(L));
-      window.location.href = href;
-      var btn = form.querySelector('button[type="submit"], button, input[type="submit"]');
-      if(btn){ btn.textContent = 'Send'; }
+  (function(){
+    const form = document.getElementById('quoteForm');
+    const btn = document.getElementById('submitBtn');
+    const successMsg = document.getElementById('successMsg');
+    if(!form) return;
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const gotcha = form.querySelector('[name="_gotcha"]');
+      if(gotcha && gotcha.value){ return; }
+      const original = btn ? btn.textContent : '';
+      if(btn){ btn.disabled = true; btn.textContent = 'Sending\u2026'; }
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        });
+        if(res.ok){
+          form.style.display = 'none';
+          if(successMsg){
+            successMsg.classList.add('show');
+            if(!successMsg.textContent.trim()){
+              successMsg.textContent = 'Thanks! Your quote request has been sent. We\u2019ll be in touch soon.';
+            }
+          }
+        } else {
+          let msg = 'Something went wrong. Please try again, or email us directly.';
+          try { const data = await res.json(); if(data && data.errors && data.errors.length){ msg = data.errors.map(x=>x.message).join(', '); } } catch(_){}
+          if(btn){ btn.disabled = false; btn.textContent = original; }
+          alert(msg);
+        }
+      } catch(err){
+        if(btn){ btn.disabled = false; btn.textContent = original; }
+        alert('Network error. Please check your connection and try again.');
+      }
     });
-  }
+  })();
 </script>
 
 </body>
