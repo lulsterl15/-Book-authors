@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Script to Video</title>
+<style>
+  :root{--bg:#121214;--panel:#1c1c20;--line:#2e2e35;--text:#ececf1;--muted:#9a9aa6;--accent:#ff4f7b;--ok:#3ecf8e;--warn:#f5b942;--err:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0}
+  header .status{margin-left:auto;color:var(--muted);font-size:13px}
+  main{display:grid;grid-template-columns:minmax(320px,460px) 1fr;gap:20px;padding:20px;max-width:1400px;margin:0 auto}
+  @media (max-width:900px){main{grid-template-columns:1fr;padding:16px}}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  section h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=password],textarea,select{width:100%;background:#111114;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px 10px;font:inherit}
+  textarea{min-height:220px;resize:vertical}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:1}
+  .check{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text);font-size:13px}
+  .check input{width:auto}
+  button{background:#2a2a31;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer}
+  button:hover:not(:disabled){border-color:#55555f}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.small{padding:5px 9px;font-size:12px;flex:0 0 auto}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+  canvas{height:min(72vh,860px);max-width:100%;aspect-ratio:9/16;background:#000;border-radius:10px;border:1px solid var(--line)}
+  .jobs{display:flex;flex-direction:column;gap:8px}
+  .job{border:1px solid var(--line);border-radius:8px;padding:10px;background:#16161a}
+  .job .top{display:flex;gap:8px;align-items:center}
+  .job .name{font-weight:600;flex:1;word-break:break-all}
+  .job .text{color:var(--muted);font-size:12px;margin:6px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .job .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .job .actions a{color:var(--ok);font-size:12px;align-self:center}
+  .pill{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill.ready{color:var(--ok);border-color:var(--ok)}
+  .pill.busy{color:var(--warn);border-color:var(--warn)}
+  .pill.error{color:var(--err);border-color:var(--err)}
+  .bar{height:4px;background:#2a2a31;border-radius:4px;overflow:hidden;margin-top:6px}
+  .bar div{height:100%;background:var(--warn);width:0}
+  #log{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);max-height:140px;overflow:auto;white-space:pre-wrap}
+  .est{font-size:13px;margin-top:10px;color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Script → Avatar Video · Tavus</h1>
+  <div class="status" id="status">Idle</div>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>1 · Avatar</h2>
+      <label for="apiKey">Tavus API key</label>
+      <input type="password" id="apiKey" placeholder="Paste your key from the API Keys page" autocomplete="off">
+      <label class="check"><input type="checkbox" id="rememberKey"> Remember key on this computer</label>
+      <label for="replicaId">Replica ID (starts with "r" — Tavus dashboard → Replicas)</label>
+      <input type="text" id="replicaId" placeholder="r1234abcd5678">
+      <label for="bgUrl">Background video/website URL (optional)</label>
+      <input type="text" id="bgUrl" placeholder="Leave blank to use the replica's own background">
+      <label for="prefix">File name prefix</label>
+      <input type="text" id="prefix" value="real-estate-tip">
+    </section>
+
+    <section>
+      <h2>2 · Script</h2>
+      <textarea id="script" placeholder="One line per video."></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="btnSample">Load sample script</button>
+        <button id="btnClear">Clear script</button>
+      </div>
+      <div class="est" id="est"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="btnGen">Generate videos</button>
+      </div>
+      <p class="hint">Generating is the only step that costs Tavus credits. Each line becomes one video. Exporting to 9:16 afterwards is free and can be repeated.</p>
+    </section>
+
+    <section>
+      <h2>3 · Vertical look</h2>
+      <div class="row">
+        <div><label for="bg">Background</label><input type="text" id="bg" value="#101014"></div>
+        <div><label for="zoom">Framing</label><select id="zoom"><option value="1">Fill (crop sides)</option><option value="1.15">Closer</option><option value="0">Fit (no crop)</option></select></div>
+      </div>
+      <label for="title">Title on top (optional)</label>
+      <input type="text" id="title" placeholder="e.g. HOME BUYING 101">
+      <label for="handle">Handle at bottom (optional)</label>
+      <input type="text" id="handle" placeholder="@yourhandle">
+      <label class="check"><input type="checkbox" id="captions" checked> Burn in captions from the script</label>
+      <label class="check"><input type="checkbox" id="monitor" checked> Play audio while exporting</label>
+    </section>
+  </div>
+
+  <div>
+    <div class="stage">
+      <canvas id="canvas" width="1080" height="1920"></canvas>
+      <p class="hint">Exports run in real time (a 30-second clip takes 30 seconds). Keep this tab visible while exporting.</p>
+    </div>
+    <section style="margin-top:16px">
+      <div class="row" style="margin-bottom:12px">
+        <h2 style="margin:0">Videos</h2>
+        <button class="small" id="btnExportAll" disabled>Export all ready to 9:16</button>
+        <button class="small" id="btnPick">Export a file from disk…</button>
+      </div>
+      <div class="jobs" id="jobs"><span class="hint">Generated videos appear here. This list is saved in your browser.</span></div>
+      <input type="file" id="filePick" accept="video/*" hidden>
+    </section>
+    <section>
+      <h2>Log</h2>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<!-- not display:none: some browsers stop decoding hidden videos -->
+<video id="src" playsinline style="position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"></video>
+
+<script>
+const $ = id => document.getElementById(id);
+const API = 'https://tavusapi.com/v2';
+const W = 1080, H = 1920;
+const ctx = $('canvas').getContext('2d');
+const video = $('src');
+
+const SAMPLE_SCRIPT = [
+  "What does it mean to get pre-approved for a mortgage? A lender checks your income, credit, and debts, then tells you how much they're willing to lend. Do this before you tour homes so you know your budget and sellers take your offer seriously.",
+  "How much do I really need for a down payment? Often less than people think. Many loan programs allow well under twenty percent down, but putting less down usually means paying mortgage insurance. Ask a lender which options fit you.",
+  "What are closing costs? They're the fees to finalize your loan and transfer the home, like lender fees, title insurance, and prepaid taxes. A common rule of thumb is two to five percent of the price, so budget for them on top of your down payment.",
+  "Should I skip the home inspection to win a bidding war? I wouldn't. An inspection can uncover roof, plumbing, or foundation problems that cost thousands. If you need a stronger offer, try other terms first, like a flexible closing date.",
+  "What's the difference between a buyer's agent and a listing agent? The listing agent represents the seller and works to get them the best price. A buyer's agent represents you. Always ask who an agent works for before you share your budget.",
+  "How do I know if a house is priced right? Look at comparable sales: recently sold homes nearby with similar size, age, and condition. Asking prices tell you what sellers hope for. Sold prices tell you what buyers actually paid.",
+  "Is it better to rent or buy right now? It depends on how long you'll stay. Buying usually makes more sense if you plan to stay at least five years, because it takes time to cover the costs of buying and selling.",
+  "What's one thing first-time buyers forget? The ongoing costs. Property taxes, insurance, HOA fees, and maintenance add up fast. A good habit is setting aside about one percent of the home's value each year for repairs."
+].join('\n');
+
+let jobs = [];             // {id, name, text, status, progress, download, hosted, error, created}
+const blobs = new Map();   // video_id -> object URL of the downloaded MP4
+let exporting = false, cues = [], audioCtx = null, recDest = null, monitorGain = null;
+
+// ---------- helpers ----------
+const log = m => { $('log').textContent += new Date().toLocaleTimeString() + '  ' + m + '\n'; $('log').scrollTop = 1e9; };
+const setStatus = s => $('status').textContent = s;
+function store(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v);}catch(e){} }
+function load(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+const scriptLines = () => $('script').value.split('\n').map(s => s.trim()).filter(Boolean);
+const saveJobs = () => store('p2v_jobs', JSON.stringify(jobs));
+
+// ---------- settings ----------
+const FIELDS = ['replicaId','bgUrl','prefix','script','bg','zoom','title','handle'];
+(() => {
+  const key = load('p2v_key'); if (key){ $('apiKey').value = key; $('rememberKey').checked = true; }
+  if (load('p2v_script') == null) $('script').value = SAMPLE_SCRIPT;
+  for (const id of FIELDS) { const v = load('p2v_'+id); if (v != null) $(id).value = v; }
+  try { jobs = JSON.parse(load('p2v_jobs') || '[]'); } catch(e) { jobs = []; }
+})();
+for (const id of FIELDS) $(id).addEventListener('input', () => { store('p2v_'+id, $(id).value); if (id === 'script') updateEstimate(); });
+$('rememberKey').addEventListener('change', () => store('p2v_key', $('rememberKey').checked ? $('apiKey').value : null));
+$('apiKey').addEventListener('input', () => { if ($('rememberKey').checked) store('p2v_key', $('apiKey').value); });
+
+function setScript(v){ $('script').value = v; store('p2v_script', v); updateEstimate(); }
+$('btnSample').onclick = () => { if (!$('script').value.trim() || confirm('Replace the current script with the sample?')) setScript(SAMPLE_SCRIPT); };
+$('btnClear').onclick = () => { if (confirm('Clear the script?')) setScript(''); };
+
+// ~150 spoken words per minute
+function estimate(lines){ const words = lines.join(' ').split(/\s+/).filter(Boolean).length; return words / 150; }
+function updateEstimate(){
+  const lines = scriptLines();
+  $('est').textContent = lines.length ? `${lines.length} video${lines.length>1?'s':''} · about ${estimate(lines).toFixed(1)} minutes of footage in total` : '';
+}
+updateEstimate();
+
+// ---------- Tavus API ----------
+async function tavus(path, method='GET', body){
+  const r = await fetch(API + path, { method, headers: { 'x-api-key': $('apiKey').value.trim(), 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const t = await r.text(); let j; try { j = JSON.parse(t); } catch { j = { raw: t }; }
+  if (!r.ok) throw new Error(j.message || j.error || t || r.status);
+  return j;
+}
+
+$('btnGen').onclick = async () => {
+  const lines = scriptLines();
+  if (!$('apiKey').value.trim()) return alert('Paste your Tavus API key first.');
+  if (!$('replicaId').value.trim()) return alert('Enter your replica ID (starts with "r").');
+  if (!lines.length) return alert('Add at least one script line.');
+  if (!confirm(`Generate ${lines.length} video${lines.length>1?'s':''} (about ${estimate(lines).toFixed(1)} minutes total)?\n\nThis uses Tavus credits.`)) return;
+
+  $('btnGen').disabled = true;
+  const stamp = new Date().toISOString().slice(0,10);
+  const prefix = ($('prefix').value.trim() || 'video').replace(/[^\w-]+/g, '-');
+  for (let i = 0; i < lines.length; i++) {
+    const name = `${prefix}-${stamp}-${String(i+1).padStart(2,'0')}`;
+    setStatus(`Submitting ${i+1} of ${lines.length}…`);
+    try {
+      const body = { replica_id: $('replicaId').value.trim(), script: lines[i], video_name: name };
+      if ($('bgUrl').value.trim()) body.background_url = $('bgUrl').value.trim();
+      const v = await tavus('/videos', 'POST', body);
+      jobs.unshift({ id: v.video_id, name, text: lines[i], status: v.status || 'queued', progress: '', hosted: v.hosted_url || '', download: '', created: Date.now() });
+      log('Queued ' + name + ' (' + v.video_id + ')');
+    } catch (e) {
+      log('Failed ' + name + ': ' + e.message);
+      jobs.unshift({ id: 'failed-' + Date.now() + '-' + i, name, text: lines[i], status: 'error', error: e.message, created: Date.now() });
+    }
+    saveJobs(); renderJobs();
+  }
+  $('btnGen').disabled = false; setStatus('Rendering on Tavus…');
+  poll();
+};
+
+// ---------- polling ----------
+const DONE = new Set(['ready','error','deleted']);
+let polling = false;
+async function poll(){
+  if (polling) return; polling = true;
+  try {
+    const pending = jobs.filter(j => !DONE.has(j.status) && !j.id.startsWith('failed-'));
+    if (pending.length && $('apiKey').value.trim()) {
+      for (const j of pending) {
+        try {
+          const v = await tavus('/videos/' + j.id);
+          const was = j.status;
+          j.status = v.status || j.status;
+          j.progress = v.generation_progress || '';
+          j.download = v.download_url || j.download;
+          j.hosted = v.hosted_url || j.hosted;
+          if (v.status === 'error') j.error = v.status_details || 'Render failed';
+          if (was !== j.status) log(j.name + ': ' + j.status);
+        } catch (e) { log('Status check failed for ' + j.name + ': ' + e.message); }
+      }
+      saveJobs(); renderJobs();
+    }
+    const left = jobs.filter(j => !DONE.has(j.status)).length;
+    setStatus(exporting ? 'Exporting…' : left ? `${left} still rendering` : 'Idle');
+  } finally { polling = false; }
+}
+setInterval(poll, 15000);
+poll();
+
+// ---------- job list ----------
+function renderJobs(){
+  const box = $('jobs'); box.innerHTML = '';
+  if (!jobs.length) { box.innerHTML = '<span class="hint">Generated videos appear here. This list is saved in your browser.</span>'; }
+  for (const j of jobs) {
+    const el = document.createElement('div'); el.className = 'job';
+    const pillClass = j.status === 'ready' ? 'ready' : j.status === 'error' ? 'error' : 'busy';
+    el.innerHTML = `<div class="top"><div class="name"></div><span class="pill ${pillClass}"></span></div><div class="text"></div><div class="actions"></div>`;
+    el.querySelector('.name').textContent = j.name;
+    el.querySelector('.pill').textContent = j.status + (j.progress && j.status !== 'ready' ? ' ' + j.progress : '');
+    el.querySelector('.text').textContent = j.error ? 'Error: ' + j.error : j.text;
+    if (!DONE.has(j.status) && /\d/.test(j.progress)) {
+      const bar = document.createElement('div'); bar.className = 'bar'; bar.innerHTML = '<div></div>';
+      bar.firstChild.style.width = parseFloat(j.progress) + '%'; el.insertBefore(bar, el.querySelector('.actions'));
+    }
+    const act = el.querySelector('.actions');
+    const btn = (label, fn, dis) => { const b = document.createElement('button'); b.className = 'small'; b.textContent = label; b.onclick = fn; b.disabled = !!dis; act.appendChild(b); return b; };
+    if (j.status === 'ready') {
+      btn('Preview 9:16', () => playJob(j, false), exporting);
+      btn('Export 9:16', () => playJob(j, true), exporting);
+      if (j.download) { const a = document.createElement('a'); a.href = j.download; a.textContent = 'Original MP4'; a.target = '_blank'; a.rel = 'noopener'; act.appendChild(a); }
+    }
+    btn('Remove', () => { if (confirm('Remove from this list? (The video stays in your Tavus account.)')) { jobs = jobs.filter(x => x !== j); saveJobs(); renderJobs(); } }, exporting);
+    box.appendChild(el);
+  }
+  $('btnExportAll').disabled = exporting || !jobs.some(j => j.status === 'ready');
+}
+renderJobs();
+
+// ---------- getting the MP4 locally (needed so the canvas can record it) ----------
+async function sourceFor(j){
+  if (blobs.has(j.id)) return blobs.get(j.id);
+  if (!j.download) { const v = await tavus('/videos/' + j.id); j.download = v.download_url; saveJobs(); }
+  setStatus('Downloading ' + j.name + '…');
+  try {
+    const r = await fetch(j.download);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const url = URL.createObjectURL(await r.blob());
+    blobs.set(j.id, url); return url;
+  } catch (e) {
+    log('Could not download ' + j.name + ' directly (' + e.message + '). Use "Original MP4" to save it, then "Export a file from disk…".');
+    throw new Error('download blocked');
+  }
+}
+
+// ---------- canvas composition ----------
+function ensureAudio(){
+  if (audioCtx) return;
+  audioCtx = new AudioContext();
+  recDest = audioCtx.createMediaStreamDestination();
+  monitorGain = audioCtx.createGain(); monitorGain.connect(audioCtx.destination);
+  const src = audioCtx.createMediaElementSource(video);
+  src.connect(recDest); src.connect(monitorGain);
+}
+$('monitor').addEventListener('change', () => { if (monitorGain) monitorGain.gain.value = $('monitor').checked ? 1 : 0; });
+
+// split the script into ~7-word caption chunks timed by character length
+function buildCues(text, duration){
+  const words = text.split(/\s+/).filter(Boolean), chunks = [];
+  for (let i = 0; i < words.length; i += 7) chunks.push(words.slice(i, i + 7).join(' '));
+  const total = chunks.reduce((n, c) => n + c.length, 0) || 1;
+  const lead = Math.min(0.3, duration * 0.02), span = Math.max(0, duration - lead * 2);
+  let t = lead;
+  return chunks.map(c => { const d = span * c.length / total; const cue = { start: t, end: t + d, text: c }; t += d; return cue; });
+}
+
+function wrap(text, maxW){
+  const words = text.split(/\s+/), out = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath(); }
+
+function draw(){
+  ctx.fillStyle = $('bg').value || '#000'; ctx.fillRect(0, 0, W, H);
+  if (video.readyState >= 2 && video.videoWidth) {
+    const vw = video.videoWidth, vh = video.videoHeight, z = parseFloat($('zoom').value);
+    if (z === 0) { const s = W / vw, dh = vh * s; ctx.drawImage(video, 0, (H - dh) / 2, W, dh); }
+    else { const s = Math.max(W / vw, H / vh) * z, dw = vw * s, dh = vh * s; ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2 - (z > 1 ? dh * 0.04 : 0), dw, dh); }
+  } else {
+    ctx.fillStyle = '#666'; ctx.font = '600 44px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Preview a ready video', W/2, H/2);
+  }
+  ctx.textAlign = 'center';
+  const title = $('title').value.trim();
+  if (title) {
+    ctx.font = '800 78px system-ui';
+    wrap(title, W - 140).forEach((l, i) => { const y = 190 + i * 92; ctx.lineWidth = 12; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText(l, W/2, y); ctx.fillStyle = '#fff'; ctx.fillText(l, W/2, y); });
+  }
+  const t = video.currentTime, cue = cues.find(c => t >= c.start && t < c.end);
+  if ($('captions').checked && cue && !video.paused) {
+    ctx.font = '700 66px system-ui';
+    const cl = wrap(cue.text, W - 160), lh = 82, top = H - 470 - (cl.length - 1) * lh;
+    const bw = Math.min(W - 80, Math.max(...cl.map(l => ctx.measureText(l).width)) + 80);
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect((W - bw)/2, top - 68, bw, cl.length * lh + 40, 24); ctx.fill();
+    ctx.fillStyle = '#fff'; cl.forEach((l, i) => ctx.fillText(l, W/2, top + i * lh));
+  }
+  const handle = $('handle').value.trim();
+  if (handle) { ctx.font = '600 44px system-ui'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(handle, W/2, H - 250); ctx.fillText(handle, W/2, H - 250); }
+}
+setInterval(draw, 1000 / 30);
+
+// ---------- preview / export ----------
+function pickMime(){
+  const opts = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  return opts.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+async function playSource(url, text, name, record){
+  ensureAudio(); await audioCtx.resume();
+  monitorGain.gain.value = $('monitor').checked ? 1 : 0;
+  video.pause(); video.src = url;
+  await new Promise((res, rej) => { video.onloadedmetadata = res; video.onerror = () => rej(new Error('Could not load video')); });
+  cues = text ? buildCues(text, video.duration) : [];
+  video.currentTime = 0;
+  if (!record) { await video.play(); setStatus('Previewing ' + name); return; }
+
+  const stream = new MediaStream([...$('canvas').captureStream(30).getVideoTracks(), ...recDest.stream.getAudioTracks()]);
+  const mimeType = pickMime();
+  const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 160_000 });
+  const chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  const stopped = new Promise(res => rec.onstop = res);
+  rec.start(1000);
+  setStatus('Exporting ' + name + '…');
+  await video.play();
+  await new Promise(res => video.onended = res);
+  await new Promise(r => setTimeout(r, 250)); // let the last frame land
+  rec.stop(); await stopped; video.onended = null;
+
+  const type = rec.mimeType || 'video/webm', ext = type.includes('mp4') ? 'mp4' : 'webm';
+  const blob = new Blob(chunks, { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '-9x16.' + ext; a.click();
+  log('Saved ' + a.download + ' (' + (blob.size/1e6).toFixed(1) + ' MB)');
+  if (ext === 'webm') log('Note: your browser saved WebM. Convert to MP4 before uploading to TikTok.');
+}
+
+async function withExportLock(fn){
+  if (exporting) return; exporting = true; renderJobs();
+  try { await fn(); } catch (e) { if (e.message !== 'download blocked') { log('Error: ' + e.message); alert(e.message); } }
+  finally { exporting = false; renderJobs(); setStatus('Idle'); }
+}
+function playJob(j, record){
+  if (!record) return sourceFor(j).then(url => playSource(url, j.text, j.name, false)).catch(e => e.message !== 'download blocked' && log('Error: ' + e.message));
+  withExportLock(async () => playSource(await sourceFor(j), j.text, j.name, true));
+}
+$('btnExportAll').onclick = () => withExportLock(async () => {
+  const ready = jobs.filter(j => j.status === 'ready');
+  for (let i = 0; i < ready.length; i++) {
+    log(`Exporting ${i+1} of ${ready.length}: ${ready[i].name}`);
+    try { await playSource(await sourceFor(ready[i]), ready[i].text, ready[i].name, true); }
+    catch (e) { if (e.message !== 'download blocked') log('Skipped ' + ready[i].name + ': ' + e.message); }
+  }
+});
+
+// export a locally saved MP4 (fallback when the direct download is blocked)
+$('btnPick').onclick = () => $('filePick').click();
+$('filePick').onchange = () => {
+  const f = $('filePick').files[0]; if (!f) return;
+  const base = f.name.replace(/\.[^.]+$/, '');
+  const match = jobs.find(j => base.includes(j.name) || base.includes(j.id));
+  const text = match ? match.text : prompt('Caption text for this clip (leave blank for no captions):', '') || '';
+  const url = URL.createObjectURL(f);
+  if (match) blobs.set(match.id, url);
+  $('filePick').value = '';
+  withExportLock(() => playSource(url, text, match ? match.name : base, true));
+};
+</script>
+</body>
+</html>
