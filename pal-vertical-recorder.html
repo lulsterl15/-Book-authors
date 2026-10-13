@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PAL Vertical Recorder</title>
+<style>
+  :root{--bg:#121214;--panel:#1c1c20;--line:#2e2e35;--text:#ececf1;--muted:#9a9aa6;--accent:#ff4f7b;--ok:#3ecf8e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  header h1{font-size:16px;margin:0}
+  header .status{margin-left:auto;color:var(--muted);font-size:13px}
+  main{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:20px;padding:20px;max-width:1400px;margin:0 auto}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  section h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=password],textarea,select{width:100%;background:#111114;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px 10px;font:inherit}
+  textarea{min-height:140px;resize:vertical}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:1}
+  .check{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text);font-size:13px}
+  .check input{width:auto}
+  button{background:#2a2a31;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer}
+  button:hover:not(:disabled){border-color:#55555f}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.rec{background:#c62828;border-color:#c62828;color:#fff;font-weight:600}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+  canvas{height:min(78vh,900px);aspect-ratio:9/16;background:#000;border-radius:10px;border:1px solid var(--line)}
+  .recdot{display:none;align-items:center;gap:6px;color:#ff6b6b;font-weight:600}
+  .recdot.on{display:flex}
+  .recdot::before{content:"";width:10px;height:10px;border-radius:50%;background:#ff3b3b;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.2}}
+  .lines{max-height:220px;overflow:auto;margin-top:10px;border:1px solid var(--line);border-radius:6px}
+  .lines div{padding:6px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .lines div:last-child{border-bottom:0}
+  .lines div.done{color:var(--muted);text-decoration:line-through}
+  .lines div.next{background:#2a1820;border-left:3px solid var(--accent)}
+  .clips a{display:block;color:var(--ok);margin-top:6px;word-break:break-all}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+  #log{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);max-height:120px;overflow:auto;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>PAL Vertical Recorder · 9:16</h1>
+  <div class="recdot" id="recdot">REC <span id="rectime">0:00</span></div>
+  <div class="status" id="status">Not connected</div>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>1 · Connect</h2>
+      <label for="apiKey">Tavus API key</label>
+      <input type="password" id="apiKey" placeholder="Paste your key from the API Keys page" autocomplete="off">
+      <label class="check"><input type="checkbox" id="rememberKey"> Remember key on this computer</label>
+      <label for="palId">PAL / Persona ID (starts with "p")</label>
+      <input type="text" id="palId" value="p10f3a825bb0">
+      <label for="replicaId">Replica ID (optional — only if your persona has no default replica)</label>
+      <input type="text" id="replicaId" placeholder="e.g. r1234abcd">
+      <label for="greeting">Opening line (optional — spoken word-for-word when the PAL joins)</label>
+      <input type="text" id="greeting" placeholder="Leave blank to use the PAL's normal greeting">
+      <label for="context">Extra context for this session (optional)</label>
+      <input type="text" id="context" placeholder="e.g. You are recording short TikTok tips. Keep answers under 30 seconds.">
+      <label class="check"><input type="checkbox" id="useMic"> Use my microphone (talk to the PAL)</label>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="btnStart">Start session</button>
+        <button id="btnEnd" disabled>End session</button>
+      </div>
+      <p class="hint">Each session uses Tavus minutes until you end it. Ending here also closes it on Tavus.</p>
+    </section>
+
+    <section>
+      <h2>2 · Script</h2>
+      <textarea id="script" placeholder="One line per clip. The PAL says each line word-for-word.&#10;&#10;Tip #1: Always back-butter large tiles.&#10;Tip #2: Never grout before the thinset cures."></textarea>
+      <label for="mode">How the PAL uses each line</label>
+      <select id="mode">
+        <option value="echo">Say it word-for-word</option>
+        <option value="respond">Answer it like a question</option>
+      </select>
+      <label class="check"><input type="checkbox" id="autoRec" checked> Start recording automatically when I send a line</label>
+      <div class="row" style="margin-top:12px">
+        <button id="btnNext" disabled>Say next line</button>
+        <button id="btnAll" disabled>Say whole script</button>
+        <button id="btnStop" disabled>Interrupt</button>
+      </div>
+      <div class="lines" id="lines"></div>
+    </section>
+
+    <section>
+      <h2>3 · Look</h2>
+      <div class="row">
+        <div><label for="bg">Background</label><input type="text" id="bg" value="#101014"></div>
+        <div><label for="zoom">Zoom</label><select id="zoom"><option value="1">Fill (crop sides)</option><option value="1.15">Closer</option><option value="0">Fit (no crop)</option></select></div>
+      </div>
+      <label for="title">Title on top (optional)</label>
+      <input type="text" id="title" placeholder="e.g. TILE TIPS WITH TIA">
+      <label for="handle">Handle at bottom (optional)</label>
+      <input type="text" id="handle" placeholder="@streambunker">
+      <label class="check"><input type="checkbox" id="captions" checked> Burn in captions of what the PAL says</label>
+      <label class="check"><input type="checkbox" id="recMic"> Include my mic in the recording</label>
+    </section>
+  </div>
+
+  <div>
+    <div class="stage">
+      <canvas id="canvas" width="1080" height="1920"></canvas>
+      <div class="row" style="width:min(100%,520px)">
+        <button class="rec" id="btnRec" disabled>● Record</button>
+        <button id="btnRecStop" disabled>■ Stop &amp; save</button>
+      </div>
+      <p class="hint">Keep this tab visible while recording — Chrome slows hidden tabs, which makes video choppy.</p>
+    </div>
+    <section style="margin-top:16px">
+      <h2>Saved clips</h2>
+      <div class="clips" id="clips"><span class="hint">Clips appear here and download automatically.</span></div>
+    </section>
+    <section>
+      <h2>Log</h2>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<!-- not display:none: some browsers stop decoding hidden videos, leaving the canvas blank -->
+<video id="palVideo" autoplay playsinline muted style="position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"></video>
+
+<script type="module">
+import Daily from 'https://cdn.jsdelivr.net/npm/@daily-co/daily-js@0.92.0/dist/daily-esm.js';
+
+const $ = id => document.getElementById(id);
+const API = 'https://tavusapi.com/v2';
+const W = 1080, H = 1920;
+const ctx = $('canvas').getContext('2d');
+const video = $('palVideo');
+
+let call = null, conversationId = null, palSessionId = null;
+let audioCtx = null, recDest = null, monitorGain = null, micSource = null, micStream = null;
+let recorder = null, chunks = [], recStart = 0, recTimer = null;
+let caption = '', captionTimer = null;
+let lines = [], nextIdx = 0;
+
+// ---------- helpers ----------
+const log = m => { $('log').textContent += new Date().toLocaleTimeString() + '  ' + m + '\n'; $('log').scrollTop = 1e9; };
+const setStatus = s => $('status').textContent = s;
+function store(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v);}catch(e){} }
+function load(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+
+// restore settings
+(() => {
+  const key = load('pvr_key'); if (key){ $('apiKey').value = key; $('rememberKey').checked = true; }
+  for (const id of ['palId','replicaId','script','title','handle','bg','context']) { const v = load('pvr_'+id); if (v != null) $(id).value = v; }
+  renderLines();
+})();
+for (const id of ['palId','replicaId','script','title','handle','bg','context']) $(id).addEventListener('input', () => { store('pvr_'+id, $(id).value); if (id==='script') renderLines(); });
+$('rememberKey').addEventListener('change', () => store('pvr_key', $('rememberKey').checked ? $('apiKey').value : null));
+$('apiKey').addEventListener('input', () => { if ($('rememberKey').checked) store('pvr_key', $('apiKey').value); });
+
+// ---------- script lines ----------
+function renderLines(){
+  lines = $('script').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (nextIdx > lines.length) nextIdx = 0;
+  const box = $('lines'); box.innerHTML = '';
+  lines.forEach((l, i) => {
+    const d = document.createElement('div');
+    d.textContent = (i+1) + '. ' + l;
+    d.className = i < nextIdx ? 'done' : i === nextIdx ? 'next' : '';
+    d.title = 'Click to make this the next line';
+    d.onclick = () => { nextIdx = i; renderLines(); };
+    box.appendChild(d);
+  });
+}
+
+// ---------- audio graph ----------
+function ensureAudio(){
+  if (audioCtx) return;
+  audioCtx = new AudioContext();
+  recDest = audioCtx.createMediaStreamDestination();
+  monitorGain = audioCtx.createGain(); monitorGain.connect(audioCtx.destination);
+}
+
+// ---------- Tavus API ----------
+async function tavus(path, method='GET', body){
+  const r = await fetch(API + path, { method, headers: { 'x-api-key': $('apiKey').value.trim(), 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const t = await r.text(); let j; try { j = JSON.parse(t); } catch { j = { raw: t }; }
+  if (!r.ok) throw new Error(j.message || j.error || t || r.status);
+  return j;
+}
+
+// ---------- session ----------
+$('btnStart').onclick = async () => {
+  if (!$('apiKey').value.trim()) return alert('Paste your Tavus API key first.');
+  $('btnStart').disabled = true; setStatus('Creating conversation…');
+  ensureAudio(); audioCtx.resume();
+  try {
+    const body = { persona_id: $('palId').value.trim(), conversation_name: 'Vertical recorder ' + new Date().toLocaleString(), properties: { max_call_duration: 1800, participant_left_timeout: 10 } };
+    if ($('replicaId').value.trim()) body.replica_id = $('replicaId').value.trim();
+    if ($('greeting').value.trim()) body.custom_greeting = $('greeting').value.trim();
+    if ($('context').value.trim()) body.conversational_context = $('context').value.trim();
+    const conv = await tavus('/conversations', 'POST', body);
+    conversationId = conv.conversation_id; log('Conversation ' + conversationId + ' created');
+    setStatus('Joining…');
+
+    call = Daily.createCallObject({ subscribeToTracksAutomatically: true });
+    call.on('track-started', onTrackStarted);
+    call.on('track-stopped', e => { if (!e.participant?.local && e.track?.kind === 'video') log('PAL video stopped'); });
+    call.on('participant-left', e => { if (!e.participant.local) { log('PAL left the call'); setStatus('PAL left'); } });
+    call.on('app-message', onAppMessage);
+    call.on('error', e => log('Call error: ' + (e.errorMsg || JSON.stringify(e))));
+    const useMic = $('useMic').checked;
+    await call.join({ url: conv.conversation_url, token: conv.meeting_token, startVideoOff: true, startAudioOff: !useMic });
+    if (useMic) attachMic();
+    setStatus('Connected — waiting for PAL…');
+    $('btnEnd').disabled = false;
+  } catch (e) {
+    log('Start failed: ' + e.message); setStatus('Not connected'); $('btnStart').disabled = false;
+    alert('Could not start: ' + e.message);
+  }
+};
+
+function onTrackStarted(e){
+  if (e.participant?.local) { if (e.track?.kind === 'audio' && !micSource) attachMic(e.track); return; }
+  palSessionId = e.participant.session_id;
+  if (e.track.kind === 'video') {
+    video.srcObject = new MediaStream([e.track]); video.play().catch(()=>{});
+    log('PAL video connected'); setStatus('Live');
+    for (const b of ['btnRec','btnNext','btnAll','btnStop']) $(b).disabled = false;
+  } else if (e.track.kind === 'audio') {
+    ensureAudio();
+    const src = audioCtx.createMediaStreamSource(new MediaStream([e.track]));
+    src.connect(recDest); src.connect(monitorGain);
+    // Chrome needs the stream attached to a media element for WebRTC audio to flow
+    const a = new Audio(); a.srcObject = new MediaStream([e.track]); a.muted = true; a.play().catch(()=>{});
+    log('PAL audio connected');
+  }
+}
+
+function attachMic(track){
+  const t = track || call.participants().local?.tracks?.audio?.persistentTrack;
+  if (!t) return;
+  ensureAudio();
+  micStream = new MediaStream([t]);
+  micSource = audioCtx.createMediaStreamSource(micStream);
+  if ($('recMic').checked) micSource.connect(recDest);
+}
+$('recMic').addEventListener('change', () => { if (!micSource) return; try { $('recMic').checked ? micSource.connect(recDest) : micSource.disconnect(recDest); } catch(e){} });
+
+function onAppMessage(e){
+  const m = e.data || {};
+  if (m.event_type === 'conversation.utterance' && m.properties?.role === 'replica') showCaption(m.properties.speech || '');
+  if (m.event_type === 'conversation.replica.started_speaking') {}
+  if (m.event_type === 'conversation.replica.stopped_speaking') { clearTimeout(captionTimer); captionTimer = setTimeout(() => caption = '', 1500); }
+}
+function showCaption(t){ caption = t; clearTimeout(captionTimer); captionTimer = setTimeout(() => caption = '', Math.max(4000, t.length * 90)); }
+
+$('btnEnd').onclick = endSession;
+async function endSession(){
+  if (recorder?.state === 'recording') stopRecording();
+  $('btnEnd').disabled = true;
+  try { await call?.leave(); call?.destroy(); } catch(e){}
+  call = null;
+  if (conversationId) { try { await tavus('/conversations/' + conversationId + '/end', 'POST'); log('Conversation ended on Tavus'); } catch(e){ log('End call: ' + e.message); } }
+  conversationId = null; video.srcObject = null;
+  try { micSource?.disconnect(); } catch(e){} micSource = null; micStream = null; caption = '';
+  for (const b of ['btnRec','btnNext','btnAll','btnStop']) $(b).disabled = true;
+  $('btnStart').disabled = false; setStatus('Not connected');
+}
+window.addEventListener('beforeunload', () => {
+  if (conversationId) fetch(API + '/conversations/' + conversationId + '/end', { method:'POST', keepalive:true, headers:{'x-api-key':$('apiKey').value.trim()} });
+});
+
+// ---------- sending lines ----------
+function send(text){
+  if (!call || !conversationId) return;
+  const event_type = $('mode').value === 'echo' ? 'conversation.echo' : 'conversation.respond';
+  const properties = event_type === 'conversation.echo' ? { modality: 'text', text } : { text };
+  call.sendAppMessage({ message_type: 'conversation', event_type, conversation_id: conversationId, properties }, '*');
+  if ($('mode').value === 'echo') showCaption(text);
+  log((event_type === 'conversation.echo' ? 'Say: ' : 'Ask: ') + text);
+}
+function maybeAutoRec(){ if ($('autoRec').checked && recorder?.state !== 'recording') startRecording(); }
+$('btnNext').onclick = () => {
+  if (!lines.length) return alert('Add some script lines first.');
+  if (nextIdx >= lines.length) nextIdx = 0;
+  maybeAutoRec(); send(lines[nextIdx]); nextIdx++; renderLines();
+};
+$('btnAll').onclick = () => { if (!lines.length) return; maybeAutoRec(); send(lines.join(' ')); nextIdx = lines.length; renderLines(); };
+$('btnStop').onclick = () => { call?.sendAppMessage({ message_type:'conversation', event_type:'conversation.interrupt', conversation_id: conversationId }, '*'); log('Interrupt sent'); };
+
+// ---------- canvas composition ----------
+function wrap(text, maxW){
+  const words = text.split(/\s+/), out = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+function draw(){
+  ctx.fillStyle = $('bg').value || '#000'; ctx.fillRect(0, 0, W, H);
+  if (video.readyState >= 2 && video.videoWidth) {
+    const vw = video.videoWidth, vh = video.videoHeight, z = parseFloat($('zoom').value);
+    if (z === 0) { // fit
+      const s = W / vw, dh = vh * s; ctx.drawImage(video, 0, (H - dh) / 2, W, dh);
+    } else {       // fill, centred on face
+      const s = Math.max(W / vw, H / vh) * z, dw = vw * s, dh = vh * s;
+      ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2 - (z > 1 ? dh * 0.04 : 0), dw, dh);
+    }
+  } else {
+    ctx.fillStyle = '#666'; ctx.font = '600 44px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(call ? 'Waiting for PAL video…' : 'Start a session', W/2, H/2);
+  }
+  ctx.textAlign = 'center';
+  const title = $('title').value.trim();
+  if (title) {
+    ctx.font = '800 78px system-ui'; const tl = wrap(title, W - 140);
+    tl.forEach((l, i) => { const y = 190 + i * 92; ctx.lineWidth = 12; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText(l, W/2, y); ctx.fillStyle = '#fff'; ctx.fillText(l, W/2, y); });
+  }
+  if ($('captions').checked && caption) {
+    ctx.font = '700 62px system-ui';
+    let cl = wrap(caption, W - 160); if (cl.length > 4) cl = cl.slice(-4);
+    const lh = 78, top = H - 470 - (cl.length - 1) * lh;
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    const bw = Math.min(W - 80, Math.max(...cl.map(l => ctx.measureText(l).width)) + 80);
+    roundRect((W - bw)/2, top - 66, bw, cl.length * lh + 40, 24); ctx.fill();
+    ctx.fillStyle = '#fff'; cl.forEach((l, i) => ctx.fillText(l, W/2, top + i * lh));
+  }
+  const handle = $('handle').value.trim();
+  if (handle) { ctx.font = '600 44px system-ui'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(handle, W/2, H - 250); ctx.fillText(handle, W/2, H - 250); }
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath(); }
+// timer-driven loop keeps drawing even if rAF throttles
+setInterval(draw, 1000 / 30);
+
+// ---------- recording ----------
+function pickMime(){
+  const opts = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  return opts.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+function startRecording(){
+  ensureAudio(); audioCtx.resume();
+  const stream = new MediaStream([...$('canvas').captureStream(30).getVideoTracks(), ...recDest.stream.getAudioTracks()]);
+  const mimeType = pickMime();
+  recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 160_000 });
+  chunks = [];
+  recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+  recorder.onstop = saveClip;
+  recorder.start(1000);
+  recStart = Date.now();
+  $('recdot').classList.add('on');
+  recTimer = setInterval(() => { const s = Math.floor((Date.now() - recStart)/1000); $('rectime').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }, 250);
+  $('btnRec').disabled = true; $('btnRecStop').disabled = false;
+  log('Recording (' + (mimeType || 'default') + ')');
+}
+function stopRecording(){ if (recorder?.state === 'recording') recorder.stop(); }
+function saveClip(){
+  clearInterval(recTimer); $('recdot').classList.remove('on');
+  $('btnRec').disabled = !call; $('btnRecStop').disabled = true;
+  const type = recorder.mimeType || 'video/webm';
+  const ext = type.includes('mp4') ? 'mp4' : 'webm';
+  const blob = new Blob(chunks, { type });
+  const name = 'pal-tiktok-' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19) + '.' + ext;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; a.textContent = name + '  (' + (blob.size/1e6).toFixed(1) + ' MB)';
+  const box = $('clips'); if (box.querySelector('.hint')) box.innerHTML = '';
+  box.prepend(a); a.click();
+  log('Saved ' + name);
+  if (ext === 'webm') log('Note: your browser saved WebM. Convert to MP4 before uploading to TikTok.');
+}
+$('btnRec').onclick = startRecording;
+$('btnRecStop').onclick = stopRecording;
+</script>
+</body>
+</html>
