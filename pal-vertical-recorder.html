@@ -87,6 +87,10 @@
         <button id="btnAll" disabled>Say whole script</button>
         <button id="btnStop" disabled>Interrupt</button>
       </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnSample">Load sample script</button>
+        <button id="btnClear">Clear script</button>
+      </div>
       <div class="lines" id="lines"></div>
     </section>
 
@@ -149,8 +153,21 @@ const setStatus = s => $('status').textContent = s;
 function store(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v);}catch(e){} }
 function load(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
 
+// sample script: real estate Q&A, one clip per line (~20–30 s each)
+const SAMPLE_SCRIPT = [
+  "What does it mean to get pre-approved for a mortgage? A lender checks your income, credit, and debts, then tells you how much they're willing to lend. Do this before you tour homes so you know your budget and sellers take your offer seriously.",
+  "How much do I really need for a down payment? Often less than people think. Many loan programs allow well under twenty percent down, but putting less down usually means paying mortgage insurance. Ask a lender which options fit you.",
+  "What are closing costs? They're the fees to finalize your loan and transfer the home, like lender fees, title insurance, and prepaid taxes. A common rule of thumb is two to five percent of the price, so budget for them on top of your down payment.",
+  "Should I skip the home inspection to win a bidding war? I wouldn't. An inspection can uncover roof, plumbing, or foundation problems that cost thousands. If you need a stronger offer, try other terms first, like a flexible closing date.",
+  "What's the difference between a buyer's agent and a listing agent? The listing agent represents the seller and works to get them the best price. A buyer's agent represents you. Always ask who an agent works for before you share your budget.",
+  "How do I know if a house is priced right? Look at comparable sales: recently sold homes nearby with similar size, age, and condition. Asking prices tell you what sellers hope for. Sold prices tell you what buyers actually paid.",
+  "Is it better to rent or buy right now? It depends on how long you'll stay. Buying usually makes more sense if you plan to stay at least five years, because it takes time to cover the costs of buying and selling.",
+  "What's one thing first-time buyers forget? The ongoing costs. Property taxes, insurance, HOA fees, and maintenance add up fast. A good habit is setting aside about one percent of the home's value each year for repairs."
+].join('\n');
+
 // restore settings
 (() => {
+  if (load('pvr_script') == null) $('script').value = SAMPLE_SCRIPT;
   const key = load('pvr_key'); if (key){ $('apiKey').value = key; $('rememberKey').checked = true; }
   for (const id of ['palId','replicaId','script','title','handle','bg','context']) { const v = load('pvr_'+id); if (v != null) $(id).value = v; }
   renderLines();
@@ -160,6 +177,9 @@ $('rememberKey').addEventListener('change', () => store('pvr_key', $('rememberKe
 $('apiKey').addEventListener('input', () => { if ($('rememberKey').checked) store('pvr_key', $('apiKey').value); });
 
 // ---------- script lines ----------
+function setScript(v){ $('script').value = v; store('pvr_script', v); nextIdx = 0; renderLines(); }
+$('btnSample').onclick = () => { if (!$('script').value.trim() || confirm('Replace the current script with the sample?')) setScript(SAMPLE_SCRIPT); };
+$('btnClear').onclick = () => { if (confirm('Clear the script?')) setScript(''); };
 function renderLines(){
   lines = $('script').value.split('\n').map(s => s.trim()).filter(Boolean);
   if (nextIdx > lines.length) nextIdx = 0;
